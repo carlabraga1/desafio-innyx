@@ -1,9 +1,9 @@
 <template>
-  <Navbar/>
+  <Navbar />
   <v-container>
     <v-snackbar v-model="snackbar.show" :timeout="3000" color="success">
-  {{ snackbar.message }}
-</v-snackbar>
+      {{ snackbar.message }}
+    </v-snackbar>
 
     <v-card class="pa-6">
       <v-card-title>
@@ -80,18 +80,65 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, RouteLocationNormalizedLoaded } from "vue-router";
 import api from "@/services/api";
+import type { VForm } from "vuetify/components";
 
-const route = useRoute();
+
+interface Categoria {
+  id: number;
+  name: string;
+}
+
+
+interface ProductForm {
+  name: string;
+  description: string;
+  price: number | null;
+  expiry_date: string;
+  category_id: number | null;
+  image: File | string | null;
+}
+
+
+const route = useRoute() as RouteLocationNormalizedLoaded & {
+  params: { id?: string };
+};
 const router = useRouter();
-const isEdit = Boolean(route.params.id);
+const id = route.params.id as string;
+const isEdit = Boolean(id);
 
-const formRef = ref();
+
+const formRef = ref<VForm | null>(null);
 const valid = ref(false);
 const loading = ref(false);
 const error = ref("");
-const categorias = ref([]);
+const categorias = ref<Categoria[]>([]);
+
+const snackbar = ref<{ show: boolean; message: string }>({
+  show: false,
+  message: "",
+});
+
+
+const form = reactive<ProductForm>({
+  name: "",
+  description: "",
+  price: null,
+  expiry_date: "",
+  category_id: null,
+  image: null,
+});
+
+
+const rules = {
+  required: (v: any) => !!v || "Campo obrigatório",
+  max50: (v: string) => v.length <= 50 || "Máximo 50 caracteres",
+  max200: (v: string) => v.length <= 200 || "Máximo 200 caracteres",
+  positive: (v: number) => v > 0 || "Deve ser maior que zero",
+  futureDate: (v: string) => new Date(v) >= new Date() || "Data inválida",
+};
+
 
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -103,22 +150,6 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-const form = reactive({
-  name: "",
-  description: "",
-  price: null,
-  expiry_date: "",
-  category_id: null,
-  image: null as File | null,
-});
-
-const rules = {
-  required: (v: any) => !!v || "Campo obrigatório",
-  max50: (v: string) => v.length <= 50 || "Máximo 50 caracteres",
-  max200: (v: string) => v.length <= 200 || "Máximo 200 caracteres",
-  positive: (v: number) => v > 0 || "Deve ser maior que zero",
-  futureDate: (v: string) => new Date(v) >= new Date() || "Data inválida",
-};
 
 const fetchCategorias = async () => {
   try {
@@ -129,18 +160,13 @@ const fetchCategorias = async () => {
   }
 };
 
-const snackbar = ref({ show: false, message: "" });
-
 
 const fetchProduto = async () => {
   if (!isEdit) return;
   try {
-    const res = await api.get(`/products/${route.params.id}`);
-
-    // Preenche os campos do formulário
+    const res = await api.get(`/products/${id}`);
     Object.assign(form, res.data);
 
-    // Monta URL da imagem
     if (res.data.image) {
       form.image = `${import.meta.env.VITE_API_BASE_URL}/storage/${
         res.data.image
@@ -150,6 +176,8 @@ const fetchProduto = async () => {
     error.value = "Erro ao carregar produto.";
   }
 };
+
+
 const handleSubmit = async () => {
   if (!formRef.value?.validate()) return;
 
@@ -163,13 +191,13 @@ const handleSubmit = async () => {
         payload.append("image", value);
       }
     } else if (value !== null) {
-      payload.append(key, value);
+      payload.append(key, String(value));
     }
   });
 
   try {
     if (isEdit) {
-      await api.post(`/products/${route.params.id}?_method=PUT`, payload);
+      await api.post(`/products/${id}?_method=PUT`, payload);
       snackbar.value.message = "Produto atualizado com sucesso!";
     } else {
       await api.post("/products", payload);
@@ -178,21 +206,23 @@ const handleSubmit = async () => {
 
     snackbar.value.show = true;
 
-    // Aguarda o snackbar desaparecer antes de redirecionar
     setTimeout(() => {
       router.push("/produtos");
     }, 3000);
-    
-  } catch (err: any) {
-    error.value = err.response?.data?.message || "Erro ao salvar produto.";
+  } catch (err: unknown) {
+    const axiosError = err as { response?: { data?: { message?: string } } };
+    error.value =
+      axiosError.response?.data?.message || "Erro ao salvar produto.";
   } finally {
     loading.value = false;
   }
 };
 
+
 const voltar = () => {
-  router.push("/produtos"); // ou qualquer outra rota específica
+  router.push("/produtos");
 };
+
 
 onMounted(() => {
   fetchCategorias();
