@@ -35,37 +35,37 @@ Projeto full stack para gerenciamento de produtos com CRUD completo, utilizando 
    ```
 
 2. Instale as dependências PHP:
-
-- composer install
-
+```bash
+ composer install
+```
 3. Configure o arquivo de ambiente:
-
-- cp .env.example .env
-
+```bash
+cp .env.example .env
+```
 - Edite o .env e defina as credenciais do MySQL.
 
 4. Execute as migrations para criar as tabelas:
-
-- php artisan migrate
-
+```bash
+ php artisan migrate
+```
 5. Inicie o servidor Laravel:
-
-- php artisan serve
-
+```bash
+php artisan serve
+```
 ### Configuração do Front-end
 
 1. Acesse a pasta do front-end:
-
-- cd frontend
-
+```bash
+ cd frontend
+```
 2. Instale as dependências:
-
-- npm install
-
+```bash
+npm install
+```
 3. Execute o servidor de desenvolvimento:
-
-- npm run dev
-
+```bash
+npm run dev
+```
 4. Acesse a aplicação no navegador pelo endereço mostrado no terminal.
 
 
