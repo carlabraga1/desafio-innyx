@@ -8,7 +8,7 @@ Projeto full stack para gerenciamento de produtos com CRUD completo, utilizando 
 
 ## Tecnologias Utilizadas
 
-- **Front-end:** Vue 3, TypeScript, Vuetify, Axios, VeeValidate
+- **Front-end:** Vue 3, TypeScript, Vuetify, Axios
 - **Back-end:** Laravel 9, PHP 8, Laravel Sanctum
 - **Banco de dados:** MySQL 8
 
